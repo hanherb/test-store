@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Customer Table</title>
+        <style>
+            #custTable {
+                font-family: arial, sans-serif;
+                border-collapse: collapse;
+                width: 100%;
+            }
+            
+            #pivotTable {
+                font-family: arial, sans-serif;
+                border-collapse: collapse;
+                width: 100%;
+                display: none;
+            }
+
+            td, th {
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+            }
+            
+            tr:nth-child(even) {
+                background-color: #dddddd;
+            }
+
+            button {
+                background-color: #008CBA; /* Green */
+                border: none;
+                color: white;
+                padding: 15px 32px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+            }
+            </style>
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    </head>
+    <body>
+        <table id="custTable">
+            <tr>
+                <th>ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Total Price</th>
+            </tr>
+        </table>
+
+        <table id="pivotTable"></table>
+
+        <br>
+
+        <button id="pivotButton" onclick="pivotCustomer()">Pivot</button>
+
+        <script>
+            window.onload = getCustomer()
+
+            function getCustomer() {
+                axios.get("http://localhost:3000/test-store/customer/get")
+                .then(function(response) {
+                    var table = document.getElementById("custTable");
+
+                    document.getElementById("pivotTable").style.display = "none";
+                    document.getElementById("custTable").style.display = "block";
+
+                    for (let i = 0; i < response.data.length; i++) {
+                        var row = table.insertRow(-1);
+                        row.insertCell(0).innerHTML = response.data[i].id;
+                        row.insertCell(1).innerHTML = response.data[i].full_name;
+                        row.insertCell(2).innerHTML = response.data[i].email;
+                        row.insertCell(3).innerHTML = response.data[i].item;
+                        row.insertCell(4).innerHTML = response.data[i].qty;
+                        row.insertCell(5).innerHTML = response.data[i].total_price;
+                    }
+                })
+                .catch(function(error) {
+                    console.log(error)
+                })
+            }
+
+            function pivotCustomer() {
+                axios.get("http://localhost:3000/test-store/customer/pivot")
+                .then(function(response) {
+                    var table = document.getElementById("pivotTable");
+
+                    document.getElementById("custTable").style.display = "none";
+                    document.getElementById("pivotTable").style.display = "block";
+                    document.getElementById("pivotButton").style.display = "none";
+
+                    let objKey = Object.keys(response.data[0])
+                    
+                    var row = table.insertRow(0);
+
+                    for (let i = 0; i < objKey.length; i++) {
+                        if (objKey[i] == "full_name") {
+                            objKey[i] = "Full Name"
+                        }
+                        
+                        if (objKey[i] == "email") {
+                            objKey[i] = "Email"
+                        }
+
+                        row.insertCell(i).outerHTML = "<th>" + objKey[i] + "</th>"
+                    }
+
+                    for (let i = 0; i < response.data.length; i++) {
+                        var row = table.insertRow(-1);
+                        row.insertCell(0).innerHTML = response.data[i].full_name;
+                        row.insertCell(1).innerHTML = response.data[i].email;
+                        for (let j = 2; j < objKey.length; j++) {
+                            row.insertCell(j).innerHTML = response.data[i][objKey[j]];
+                        }
+                    }
+                })
+                .catch(function(error) {
+                    console.log(error)
+                })
+            }
+        </script>
+    </body>
+</html>
